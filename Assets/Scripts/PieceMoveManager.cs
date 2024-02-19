@@ -184,16 +184,14 @@ public class PieceMoveManager : MonoBehaviour {
                 else if (!CastlingManager.whiteKingRookHaveMove && clickCoord == new Coord(7, 0)) CastlingManager.whiteKingRookHaveMove = true;
             } else {
                 // Black
-                if (!CastlingManager.blackQueenRookHaveMove && clickCoord == new Coord(0, 7)) CastlingManager.blackQueenRookHaveMove = true;
-                else if (!CastlingManager.blackKingRookHaveMove && clickCoord == new Coord(7, 7)) CastlingManager.blackKingRookHaveMove = true;
+                if (!CastlingManager.blackQueenRookHaveMove && clickCoord == new Coord(0, 0)) CastlingManager.blackQueenRookHaveMove = true;
+                else if (!CastlingManager.blackKingRookHaveMove && clickCoord == new Coord(7, 0)) CastlingManager.blackKingRookHaveMove = true;
             }
         }
     }
     
     void CheckPromotion() {
-        int promotionRank = Piece.IsWhite(curOrder) ? 7 : 0;
-
-        if (Piece.GetPieceType(curPiece) == Piece.Pawn && mouseCoord.rank == promotionRank) {
+        if (Piece.GetPieceType(curPiece) == Piece.Pawn && mouseCoord.rank == 7) {
             BoardGenerator.Instance.DrawPiece(mouseCoord, Piece.Queen);
         }
     }

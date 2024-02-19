@@ -13,11 +13,11 @@ public static class Moves {
         int color = Piece.GetColor(Board.squares[ToIndex(curCoord)]);
 
         if (color == Piece.White) {
-            if (CastlingManager.whiteQueenSide) moves.Add(new Coord(2, Piece.IsWhite(color) ? 0 : 7));
-            if (CastlingManager.whiteKingSide) moves.Add(new Coord(6, Piece.IsWhite(color) ? 0 : 7));
+            if (CastlingManager.whiteQueenSide) moves.Add(new Coord(2, 0));
+            if (CastlingManager.whiteKingSide) moves.Add(new Coord(6, 0));
         } else {
-            if (CastlingManager.blackQueenSide) moves.Add(new Coord(2, Piece.IsWhite(color) ? 0 : 7));
-            if (CastlingManager.blackKingSide) moves.Add(new Coord(6, Piece.IsWhite(color) ? 0 : 7));
+            if (CastlingManager.blackQueenSide) moves.Add(new Coord(2, 0));
+            if (CastlingManager.blackKingSide) moves.Add(new Coord(6, 0));
         }
 
         return moves;
@@ -25,8 +25,6 @@ public static class Moves {
 
     public static List<Coord> PawnMove(Coord curCoord) {
         List<Coord> moves = new List<Coord>();
-
-        int startCoordRank = 1;
 
         // Up
         int up = ToIndex(curCoord) + 8;
@@ -37,7 +35,7 @@ public static class Moves {
             // Two step up
             int twoUp = ToIndex(curCoord) + 16;
 
-            if (curCoord.rank == startCoordRank && Board.squares[twoUp] == Piece.None) {
+            if (curCoord.rank == 1 && Board.squares[twoUp] == Piece.None) {
                 moves.Add(ToCoord(twoUp));
             }
         }
