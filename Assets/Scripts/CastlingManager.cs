@@ -1,11 +1,8 @@
 using static Game;
 
 public static class CastlingManager {
-    static readonly Coord[] whiteQueenSideBetween = new Coord[] { new (2, 0), new (3, 0) };
-    static readonly Coord[] whiteKingSideBetween = new Coord[] { new (5, 0), new (6, 0) };
-
-    static readonly Coord[] blackQueenSideBetween = new Coord[] { new (2, 7), new (3, 7) };
-    static readonly Coord[] blackKingSideBetween = new Coord[] { new (5, 7), new (6, 7) };
+    static readonly Coord[] queenSideBetween = new Coord[] { new (2, 0), new (3, 0) };
+    static readonly Coord[] kingSideBetween = new Coord[] { new (5, 0), new (6, 0) };
 
     public static bool whiteKingHaveMove = false;
     public static bool blackKingHaveMove = false;
@@ -24,13 +21,8 @@ public static class CastlingManager {
         bool emptyBetween = true;
         Coord[] betweenCoords;
 
-        if (Piece.IsWhite(color)) {
-            if (isQueenSide) betweenCoords = whiteQueenSideBetween;
-            else betweenCoords = whiteKingSideBetween;
-        } else {
-            if (isQueenSide) betweenCoords = blackQueenSideBetween;
-            else betweenCoords = blackKingSideBetween;
-        }
+        if (isQueenSide) betweenCoords = queenSideBetween;
+        else betweenCoords = kingSideBetween;
 
         foreach (Coord between in betweenCoords) {
             // Check the between the king and the rook is empty
