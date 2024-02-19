@@ -196,8 +196,10 @@ public class PieceMoveManager : MonoBehaviour {
     }
 
     [PunRPC]
-    void SyncCurOrder(int newCurOrder, int[] board) {
-        Board.squares = board;
+    void SyncCurOrder(int newCurOrder, Vector4[] moves) {
+        foreach (Vector4 move in moves) {
+            BoardGenerator.Instance.MovePiece(new Coord(7 - (int)move.x, 7 - (int)move.y), new Coord(7 - (int)move.z, 7 - (int)move.w), Board.squares[ToIndex(new Coord(7 - (int)move.x, 7 - (int)move.y))]);
+        }
 
         curOrder = newCurOrder;
     }
