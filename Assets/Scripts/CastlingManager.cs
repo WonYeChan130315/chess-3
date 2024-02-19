@@ -64,7 +64,7 @@ public static class CastlingManager {
         }
 
         // Check whether rook survives
-        bool rookSurvives = Board.squares[ToIndex(new Coord(isQueenSide ? 0 : 7, Piece.IsWhite(color) ? 0 : 7))] == Piece.Rook + color;
+        bool rookSurvives = Board.squares[ToIndex(new Coord(isQueenSide ? 0 : 7, 0))] == Piece.Rook + color;
 
         return emptyBetween && !rookHaveMove && !kingHaveMove && !isCheck && rookSurvives;
     }
