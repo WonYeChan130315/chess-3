@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using Photon.Pun;
+using Unity.Burst.Intrinsics;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static Game;
 
 public class PieceMoveManager : MonoBehaviour {
@@ -72,13 +74,19 @@ public class PieceMoveManager : MonoBehaviour {
     void PieceMove() {
         int targetPiece = Board.squares[ToIndex(mouseCoord)];
 
+        List<Vector2> to = new List<Vector2>();
+        List<Vector2> from = new List<Vector2>();
+
         // Move
         BoardGenerator.Instance.MovePiece(clickCoord, mouseCoord, curPiece);
+
+        from.Add(new Vector2(clickCoord.file, clickCoord.rank));
+        to.Add(new Vector2(mouseCoord.file, mouseCoord.rank));
         
         // Check
         CheckPromotion();
-        CheckCastling();
-        CheckEnpassant(targetPiece);
+        CheckCastling(ref from, ref to);
+        CheckEnpassant(targetPiece, ref from, ref to);
         CheckKingAndRookMove();
         CheckCanCastling();
         CheckCanEnpassant();
@@ -87,7 +95,7 @@ public class PieceMoveManager : MonoBehaviour {
             moveCount++;
 
         curOrder = Piece.ReverseColor(curOrder);
-        pv.RPC("SyncCurOrder", RpcTarget.OthersBuffered, Board.squares);
+        pv.RPC("SyncCurOrder", RpcTarget.OthersBuffered, curOrder, from.ToArray(), to.ToArray());
 
         // Check the checkmate
         List<Coord> attackList = new List<Coord>();
@@ -125,11 +133,13 @@ public class PieceMoveManager : MonoBehaviour {
         }
     }
 
-    void CheckEnpassant(int targetPiece) {
-        int direction = Piece.IsWhite(curOrder) ? 1 : -1;
+    void CheckEnpassant(int targetPiece, ref List<Vector2> from, ref List<Vector2> to) {
+        if (targetPiece == Piece.None && Piece.GetPieceType(curPiece) == Piece.Pawn && Board.squares[ToIndex(new Coord(mouseCoord.file, mouseCoord.rank - 1))] != Piece.None) {
+            Coord target = new Coord(mouseCoord.file, mouseCoord.rank - 1);
+            BoardGenerator.Instance.DrawPiece(target, Piece.None);
 
-        if (targetPiece == Piece.None && Piece.GetPieceType(curPiece) == Piece.Pawn && Board.squares[ToIndex(mouseCoord) - ToIndex(new Coord(0, 1 * direction))] != Piece.None) {
-            BoardGenerator.Instance.DrawPiece(ToCoord(ToIndex(mouseCoord) - ToIndex(new Coord(0, 1 * direction))), Piece.None);
+            from.Add(new Vector2(-1, -1));
+            to.Add(new Vector2(target.file, target.rank));
         }
     }
 
@@ -141,13 +151,19 @@ public class PieceMoveManager : MonoBehaviour {
         CastlingManager.blackKingSide = CastlingManager.CanCastling(Piece.Black, false);
     }
 
-    void CheckCastling() {
+    void CheckCastling(ref List<Vector2> from, ref List<Vector2> to) {
         if (Piece.GetPieceType(curPiece) == Piece.King) {
             if (clickCoord.file == 4) {
                 if (mouseCoord.file == 2) {
                     BoardGenerator.Instance.MovePiece(new Coord(0, clickCoord.rank), new Coord(3, clickCoord.rank), Board.squares[ToIndex(new Coord(0, clickCoord.rank))]);
+
+                    from.Add(new Vector4(0, clickCoord.rank));
+                    to.Add(new Vector4(3, clickCoord.rank));
                 } else if (mouseCoord.file == 6) {
                     BoardGenerator.Instance.MovePiece(new Coord(7, clickCoord.rank), new Coord(5, clickCoord.rank), Board.squares[ToIndex(new Coord(7, clickCoord.rank))]);
+
+                    from.Add(new Vector4(7, clickCoord.rank));
+                    to.Add(new Vector4(5, clickCoord.rank));
                 }
             }
         }
@@ -196,11 +212,14 @@ public class PieceMoveManager : MonoBehaviour {
     }
 
     [PunRPC]
-    void SyncCurOrder(int newCurOrder, Vector4[] moves) {
-        foreach (Vector4 move in moves) {
-            BoardGenerator.Instance.MovePiece(new Coord(7 - (int)move.x, 7 - (int)move.y), new Coord(7 - (int)move.z, 7 - (int)move.w), Board.squares[ToIndex(new Coord(7 - (int)move.x, 7 - (int)move.y))]);
-        }
-
+    void SyncCurOrder(int newCurOrder, Vector2[] from, Vector2[] to) {
         curOrder = newCurOrder;
+
+        for (int i = 0; i < to.Length; i++) {
+            Coord correctedFrom = new Coord((int)from[i].x, 7 - (int)from[i].y);
+            Coord correctedTo = new Coord((int)to[i].x, 7 - (int)to[i].y);
+
+            BoardGenerator.Instance.MovePiece(correctedFrom, correctedTo, Board.IsOutBoard(correctedFrom) ? Piece.None : Board.squares[ToIndex(correctedFrom)]);
+        }
     }
 }
