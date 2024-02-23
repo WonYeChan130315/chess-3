@@ -52,3 +52,14 @@ public struct Coord {
         return file.GetHashCode() ^ rank.GetHashCode();
     }
 }
+
+[System.Serializable]
+public struct Move {
+    public Coord from;
+    public Coord to;
+
+    public Move(Coord from, Coord to) {
+        this.from = from;
+        this.to = to;
+    }
+}

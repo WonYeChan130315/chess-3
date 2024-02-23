@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using static Game;
+using Photon.Pun;
 
 # pragma warning disable CS0108
 
@@ -69,9 +70,9 @@ public class BoardGenerator : MonoBehaviour {
         // Create square
         Transform square = GameObject.CreatePrimitive(PrimitiveType.Quad).transform;
 
-        // string alphabets = "abcdefgh";
+        string alphabets = "abcdefgh";
 
-        square.name = coord.file + "" + coord.rank;//alphabets[coord.rank] + "" + (coord.file + 1);
+        square.name = alphabets[coord.rank] + "" + (coord.file + 1);
         square.parent = transform;
         square.position = CoordToPosition(coord);
 
@@ -97,9 +98,9 @@ public class BoardGenerator : MonoBehaviour {
         return new Vector2(x, y);
     }
 
-    public void MovePiece(Coord from, Coord to, int piece) {
-        DrawPiece(from, Piece.None);
-        DrawPiece(to, piece);
+    public void MovePiece(Move move, int piece) {
+        DrawPiece(move.from, Piece.None);
+        DrawPiece(move.to, piece);
     }
 
     public void DrawPiece(Coord coord, int piece) {

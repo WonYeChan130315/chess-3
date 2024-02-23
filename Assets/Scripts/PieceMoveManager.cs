@@ -1,14 +1,15 @@
+using System.Collections;
 using System.Collections.Generic;
 using Photon.Pun;
-using Unity.Burst.Intrinsics;
 using UnityEngine;
-using UnityEngine.UIElements;
 using static Game;
 
 public class PieceMoveManager : MonoBehaviour {
     public static int myOrder;
     public static int moveCount = 1;
     public static int curOrder = Piece.White;
+
+    public float pieceMoveSpeed;
 
     Transform movingPieceObj;
     Coord clickCoord;
@@ -37,6 +38,7 @@ public class PieceMoveManager : MonoBehaviour {
 
         mouseCoord = PositionToCoord(mousePosition);
 
+        // Piece down
         if (Input.GetMouseButtonDown(0) && !Board.IsOutBoard(mouseCoord)) {
             clickCoord = mouseCoord;
 
@@ -54,10 +56,12 @@ public class PieceMoveManager : MonoBehaviour {
             }
         }
 
+        // Piece dragging
         if (Input.GetMouseButton(0) && dragging) {
             movingPieceObj.position = mousePosition;
         }
-
+        
+        // Piece up
         if (Input.GetMouseButtonUp(0) && dragging) {
             dragging = false;
 
@@ -78,8 +82,8 @@ public class PieceMoveManager : MonoBehaviour {
         List<Vector2> from = new List<Vector2>();
 
         // Move
-        BoardGenerator.Instance.MovePiece(clickCoord, mouseCoord, curPiece);
-
+        BoardGenerator.Instance.MovePiece(new Move(clickCoord, mouseCoord), curPiece);
+                
         from.Add(new Vector2(clickCoord.file, clickCoord.rank));
         to.Add(new Vector2(mouseCoord.file, mouseCoord.rank));
         
@@ -125,10 +129,8 @@ public class PieceMoveManager : MonoBehaviour {
     void CheckCanEnpassant() {
         EnpassantManager.enpassantCoord = Coord.None;
 
-        if (Piece.GetPieceType(curPiece) == Piece.Pawn && Mathf.Abs(clickCoord.rank - mouseCoord.rank) == 2) {
-            int direction = Piece.IsWhite(curOrder) ? 1 : -1;
-            Coord enpassantCoord = new Coord(clickCoord.file, clickCoord.rank + direction);
-
+        if (Piece.GetPieceType(curPiece) == Piece.Pawn && mouseCoord.rank - clickCoord.rank == 2) {
+            Coord enpassantCoord = new Coord(clickCoord.file, clickCoord.rank - 1);
             EnpassantManager.enpassantCoord = enpassantCoord;
         }
     }
@@ -155,12 +157,12 @@ public class PieceMoveManager : MonoBehaviour {
         if (Piece.GetPieceType(curPiece) == Piece.King) {
             if (clickCoord.file == 4) {
                 if (mouseCoord.file == 2) {
-                    BoardGenerator.Instance.MovePiece(new Coord(0, clickCoord.rank), new Coord(3, clickCoord.rank), Board.squares[ToIndex(new Coord(0, clickCoord.rank))]);
+                    BoardGenerator.Instance.MovePiece(new Move(new Coord(0, clickCoord.rank), new Coord(3, clickCoord.rank)), Board.squares[ToIndex(new Coord(0, clickCoord.rank))]);
 
                     from.Add(new Vector4(0, clickCoord.rank));
                     to.Add(new Vector4(3, clickCoord.rank));
                 } else if (mouseCoord.file == 6) {
-                    BoardGenerator.Instance.MovePiece(new Coord(7, clickCoord.rank), new Coord(5, clickCoord.rank), Board.squares[ToIndex(new Coord(7, clickCoord.rank))]);
+                    BoardGenerator.Instance.MovePiece(new Move(new Coord(7, clickCoord.rank), new Coord(5, clickCoord.rank)), Board.squares[ToIndex(new Coord(7, clickCoord.rank))]);
 
                     from.Add(new Vector4(7, clickCoord.rank));
                     to.Add(new Vector4(5, clickCoord.rank));
@@ -217,7 +219,22 @@ public class PieceMoveManager : MonoBehaviour {
             Coord correctedFrom = new Coord((int)from[i].x, 7 - (int)from[i].y);
             Coord correctedTo = new Coord((int)to[i].x, 7 - (int)to[i].y);
 
-            BoardGenerator.Instance.MovePiece(correctedFrom, correctedTo, Board.IsOutBoard(correctedFrom) ? Piece.None : Board.squares[ToIndex(correctedFrom)]);
+            Move move = new Move(correctedFrom, correctedTo);
+            
+            StartCoroutine(PieceMoveRoutine(move));
         }
+    }
+
+    IEnumerator PieceMoveRoutine(Move move) {
+        Transform piece = BoardGenerator.Instance.pieceRenderers[ToIndex(move.from)].transform;
+        Vector3 targetPosition = BoardGenerator.Instance.squareRenderers[ToIndex(move.to)].transform.position;
+
+        while (Vector2.Distance(piece.position, targetPosition) > 0.01f) {
+            piece.position = Vector2.Lerp(piece.position, targetPosition, Time.deltaTime * pieceMoveSpeed);
+            yield return new WaitForSeconds(0.1f * Time.deltaTime);
+        }
+
+        piece.localPosition = Vector2.zero;
+        BoardGenerator.Instance.MovePiece(move, Board.squares[ToIndex(move.from)]);
     }
 }
